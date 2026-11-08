@@ -23,6 +23,12 @@ projects:
             # SQLite and images on a disk, so one instance only.
             numInstances: 1
             healthCheckPath: /api/health
+            # The image gives frankenphp a file capability (cap_net_bind_service) that
+            # Render containers do not allow, so starting it as www-data fails with
+            # "Operation not permitted". A plain copy has no capability, and Slink
+            # only binds 8080. No quotes: Render passes the script to sh -c as-is.
+            dockerCommand: >-
+              sh -c cp /usr/local/bin/frankenphp /tmp/frankenphp && mv /tmp/frankenphp /usr/local/bin/frankenphp && exec /usr/local/bin/entrypoint
             disk:
               # Slink keeps its SQLite databases and keys in /app/var/data and
               # images in /app/slink/images. One disk at /app covers both.
