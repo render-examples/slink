@@ -1,0 +1,50 @@
+# yaml-language-server: $schema=https://render.com/schema/render.yaml.json
+#
+# Slink wrapper. This repo does not contain the app.
+# The service pulls the official image from Docker Hub at a pinned version.
+# To upgrade, bump the image tag below and push.
+# Upstream: https://github.com/andrii-kryvoviaz/slink
+
+previews:
+  generation: off
+
+projects:
+  - name: slink
+    environments:
+      - name: production
+        services:
+          - type: web
+            name: slink
+            runtime: image
+            image:
+              url: docker.io/anirdev/slink:v1.14.6
+            plan: starter
+            region: oregon
+            # SQLite and images on a disk, so one instance only.
+            numInstances: 1
+            healthCheckPath: /api/health
+            disk:
+              # Slink keeps its SQLite databases and keys in /app/var/data and
+              # images in /app/slink/images. One disk at /app covers both.
+              name: slink-data
+              mountPath: /app
+              sizeGB: 5
+            envVars:
+              # The web app listens on PORT. The API stays internal on 8080.
+              - key: PORT
+                value: "3000"
+              # Public URL. The web app rejects form posts from other origins.
+              - key: ORIGIN
+                fromService:
+                  name: slink
+                  type: web
+                  envVarKey: RENDER_EXTERNAL_URL
+              # Admin account, created on first boot.
+              - key: ADMIN_EMAIL
+                sync: false
+              - key: ADMIN_USERNAME
+                value: admin
+              - key: ADMIN_PASSWORD
+                generateValue: true
+              - key: TZ
+                value: UTC
